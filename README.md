@@ -169,7 +169,7 @@ Runs manually via `workflow_dispatch` or automatically when a release tag is pus
 
 ### Security Audit Pipeline (`audit.yml`)
 
-Runs on a weekly schedule to automatically scan all Rust dependencies for known vulnerabilities using `cargo audit`.
+Runs on a 12hourly schedule to automatically scan all Rust dependencies for known vulnerabilities using `cargo audit`.
 
 
 > All sensitive values such as `STELLAR_SECRET_KEY` are stored as **GitHub Actions Secrets** and injected at runtime — never hardcoded in workflow files.
