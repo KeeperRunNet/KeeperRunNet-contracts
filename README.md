@@ -160,100 +160,12 @@ All CI/CD pipelines live in `.github/workflows/`.
 
 Runs on every pull request and push to `main`. Ensures the contract builds, passes all tests, and meets formatting standards before any merge is allowed.
 
-```yaml
-name: CI
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - name: Check formatting
-        run: cargo fmt --check
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Run contract tests
-        run: cargo test
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Add Wasm target
-        run: rustup target add wasm32-unknown-unknown
-      - name: Build Wasm binary
-        run: cargo build --target wasm32-unknown-unknown --release
-      - name: Upload Wasm artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: keeperrunnet_registry.wasm
-          path: target/wasm32-unknown-unknown/release/keeperrunnet_registry.wasm
-```
 
 ### Deploy Pipeline (`deploy.yml`)
 
 Runs manually via `workflow_dispatch` or automatically when a release tag is pushed. Downloads the Wasm artifact from the CI build, optimizes it, and deploys to the target network.
 
-```yaml
-name: Deploy
-
-on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      network:
-        description: 'Target network (testnet or mainnet)'
-        required: true
-        default: testnet
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Add Wasm target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Build Wasm binary
-        run: cargo build --target wasm32-unknown-unknown --release
-
-      - name: Install Soroban CLI
-        run: cargo install soroban-cli
-
-      - name: Optimize Wasm binary
-        run: |
-          soroban contract optimize \
-            --wasm target/wasm32-unknown-unknown/release/keeperrunnet_registry.wasm
-
-      - name: Deploy to network
-        env:
-          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_SECRET_KEY }}
-        run: |
-          soroban contract deploy \
-            --wasm target/wasm32-unknown-unknown/release/keeperrunnet_registry.optimized.wasm \
-            --source $STELLAR_SECRET_KEY \
-            --network ${{ github.event.inputs.network || 'testnet' }}
-```
 
 ### Security Audit Pipeline (`audit.yml`)
 

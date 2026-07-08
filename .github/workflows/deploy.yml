@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Target network (testnet or mainnet)'
+        required: true
+        default: testnet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build Wasm binary
+        run: cargo build --target wasm32-unknown-unknown --release
+
+      - name: Install Soroban CLI
+        run: cargo install soroban-cli
+
+      - name: Optimize Wasm binary
+        run: |
+          soroban contract optimize \
+            --wasm target/wasm32-unknown-unknown/release/keeperrunnet_registry.wasm
+
+      - name: Deploy to network
+        env:
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_SECRET_KEY }}
+        run: |
+          soroban contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/keeperrunnet_registry.optimized.wasm \
+            --source $STELLAR_SECRET_KEY \
+            --network ${{ github.event.inputs.network || 'testnet' }}
