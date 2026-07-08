@@ -171,24 +171,6 @@ Runs manually via `workflow_dispatch` or automatically when a release tag is pus
 
 Runs on a weekly schedule to automatically scan all Rust dependencies for known vulnerabilities using `cargo audit`.
 
-```yaml
-name: Security Audit
-
-on:
-  schedule:
-    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
-  workflow_dispatch:
-
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
-      - name: Run dependency audit
-        run: cargo audit
-```
 
 > All sensitive values such as `STELLAR_SECRET_KEY` are stored as **GitHub Actions Secrets** and injected at runtime — never hardcoded in workflow files.
 
